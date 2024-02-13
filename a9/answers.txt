@@ -1,0 +1,117 @@
+Name: He Chengkun
+Student ID: 
+
+QUESTION 1: DEBIT OR CREDIT?
+
+Answer: Though the results are very close, people from Ontario tend to put larger purchases slightly on credit card.
+
+Query:
+
+select 
+t2.mtype, avg(t1.amount) as avg_amount
+from purchases t1
+left join paymentmethods t2
+on t1.custid = t2.custid
+left join customers t3
+on t3.custid = t1.custid
+where t3.province = 'ON' and t1.amount is NOT NULL
+group by 1 order by 2 DESC;
+
+Results:
+
+mtype	avg_amount
+credit	121.45	
+debit	113.44	
+
+
+QUESTION 2: WHO SPENDS MORE OVERALL?
+
+Answer: People outside BC spend more overall, as they feature the highest average & median purchase amount.
+
+Query:
+
+CREATE OR REPLACE VIEW vancouver_custs AS
+WITH
+  vprefixes AS
+    (SELECT DISTINCT pcprefix FROM greater_vancouver_prefixes)
+SELECT DISTINCT t1.custid, (CASE WHEN t2.pcprefix IS NOT NULL THEN 1 ELSE 0 END) AS in_vancouver
+FROM customers t1
+FULL OUTER JOIN vprefixes t2
+ON SUBSTRING(t1.postalcode, 1, 3) = t2.pcprefix;
+
+SELECT
+CASE WHEN t3.province = 'BC' AND t2.in_vancouver = 0 THEN 1 ELSE 0 END AS From_BC_non_Van,
+t2.in_vancouver AS From_Van,
+COUNT(t1.*) AS "Count",
+AVG(t1.amount) AS Average,
+MEDIAN(t1.amount) AS "Median"
+FROM purchases t1
+LEFT JOIN vancouver_custs t2
+ON t1.custid = t2.custid
+LEFT JOIN customers t3
+ON t1.custid = t3.custid
+GROUP BY 1, 2 ORDER BY 5 ASC;
+
+Results:
+
+from_bc_non_van from_van count average median
+0	1	10384	86.01	27.37	
+1	0	3899	95.16	30.08	
+0	0	15717	112.89	33.27	
+
+
+QUESTION 3: WHO SPENDS MORE ON SUSHI?
+
+Answer: tourists outside BC spend more at restaurants that serve sushi due to their higher average purchase amount.
+
+Query:
+
+SELECT
+AVG(t1.amount),
+t2.in_vancouver
+FROM purchases t1
+LEFT JOIN VANCOUVER_CUSTS t2
+ON t1.custid = t2.custid
+WHERE t1.amenid IN (SELECT DISTINCT amenid FROM amenities
+WHERE amenity = 'restaurant' AND tags.cuisine ILIKE '%sushi%')
+GROUP BY 2;
+
+Results:
+
+avg	in_vancouver
+77.57	1	
+85.8	0	
+
+Question 4: Average purchase per day for the first five days?
+
+Answer: The average purchase per day for the first five days of August are 96.59, 106.56, 95.87, 115.5, 95.67.
+
+Query:
+
+SELECT
+DISTINCT pdate, AVG(amount)
+FROM purchases
+WHERE DATE_PART(month, pdate) = 8 
+AND DATE_PART(day, pdate) IN (1, 2, 3, 4, 5)
+GROUP BY 1
+ORDER BY 1 ASC;
+
+Results:
+
+pdate		avg
+2021-08-01	96.59	
+2021-08-02	106.56	
+2021-08-03	95.87	
+2021-08-04	115.5	
+2021-08-05	95.67	
+
+The bytes / record ratio for Redshift on the 5-day query is 94.06 KB / 4,703 rows = 20 bytes per row.
+
+The bytes / record ratio for Spectrum on the 5-day query is 267,396 bytes / 4,703 rows ≈ 56.85 bytes per row.
+
+Given that for this purchase dataset, the averages are 57 bytes/line and 968 lines/day, we know that to read data of five days, we need to read ~968*57*5 = 275,880 bytes, which is quite close to the 267,396 bytes read by Spectrum. Hence we can deduce that Spectrum scans WHOLE rows for the FIVE days we selected from the data in S3. On the other hand, 
+Due to a lower bytes / record ratio, we can deduce that Redshift only read necessary columns (in this case, pdate and amount), instead of the whole rows, to complete the query operation.
+
+For data that are relatively small, structured, relational, requires frequent updates & complex column-based analysis, it's better to load them into Redshift.
+
+On the other hand, for data that are relatively large, unstructured, on which only primary opeartions would be done (i.e. raw data & historical data) are suitable to be retained in S3 & query them using Spectrum. This practice can better utlize the parellelism that Spectrum provides, and also make the data available to other tools.

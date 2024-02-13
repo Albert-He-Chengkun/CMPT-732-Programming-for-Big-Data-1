@@ -1,0 +1,51 @@
+Name: He Chengkun
+Student ID: 
+
+1. How did the output change when you submitted with -D mapreduce.job.reduces=3? Why would this be necessary if your job produced large output sets?
+
+Answer: When the number of reducers is set to 3, there are three reducers doing the reduce task parallelly & generating three output files in the output directory. 
+
+cha196@pmp-gateway:~$ hdfs dfs -ls  output-2
+Found 4 items
+-rw-r--r--   2 cha196 supergroup          0 2023-09-14 16:51 output-2/_SUCCESS
+-rw-r--r--   2 cha196 supergroup     106909 2023-09-14 16:51 output-2/part-r-00000
+-rw-r--r--   2 cha196 supergroup     106932 2023-09-14 16:51 output-2/part-r-00001
+-rw-r--r--   2 cha196 supergroup     105712 2023-09-14 16:51 output-2/part-r-00002
+
+This practice reduces the burden on a single reducer & lets them generate output more efficiently.
+
+
+2. How was the -D mapreduce.job.reduces=0 output different?
+
+Answer:
+
+Below shows the output file items generated under this situation:
+
+cha196@pmp-gateway:~$ hdfs dfs -ls output-3
+Found 4 items
+-rw-r--r--   2 cha196 supergroup          0 2023-09-14 17:03 output-3/_SUCCESS
+-rw-r--r--   2 cha196 supergroup    1197116 2023-09-14 17:03 output-3/part-m-00000
+-rw-r--r--   2 cha196 supergroup     905534 2023-09-14 17:03 output-3/part-m-00001
+-rw-r--r--   2 cha196 supergroup     629947 2023-09-14 17:03 output-3/part-m-00002
+
+Instead of "part-r", the filename starts with "part-m", which indicates that they are the output from the mapper directly (not reducer). The file size is also larger, since no reduce task is done to them because the number of reducer is set to 0.
+
+
+3. Was there any noticeable difference in the running time of your RedditAverage with and without the combiner optimization?
+
+Answer:
+
+Yes. With combiner it takes a bit less time that without one. the combiner reduces the work of reducers). For example, in two trials,
+
+With Combiner:
+Total time spent by all map tasks (ms)=43579
+Total time spent by all reduce tasks (ms)=3059
+
+Without Combiner:
+Total time spent by all map tasks (ms)=55789
+Total time spent by all reduce tasks (ms)=3217
+
+I think it is because the combiner plays an important role in reducing the burden for reducers. For reddit-1:
+
+Combine input records=9146
+Combine output records=44

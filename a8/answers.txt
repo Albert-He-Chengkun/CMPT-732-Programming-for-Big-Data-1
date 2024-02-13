@@ -1,0 +1,47 @@
+Name: He Chengkun
+Student ID: 
+
+1. What happened when you inserted another row with the same primary key as an existing row?
+
+Answer: The existing row with the same primary key gets its value updated with the new value.
+
+
+2. What happened when you query a keyspace with replication factor 1 and one node down? How did it behave with replication factor 2 and a node down?
+
+Answer: In the former case, the query cannot be executed as the node that stores the data is down, and we only have one copy of data due to replication factor = 1.
+In the latter case, the query can be executed as the other node which is not done still holds the data. There are two copies of the data available on more that one node in this case due to replication factor = 2.
+
+
+3. How did the consistency level affect the results with the node up/down?
+
+Answer: Consistency Level dictates the number of replicas (in a cluster) that must acknowledge an operation in order for the coordinator node to determine the operation was successful. For example, if replication factor = 2 and cosistency level = 1, and if one node is down, we can still execute the operation as the consistency level only require one node to respond (which may cause inconsistency over nodes before sync) & and we happen to have one node available. However, if cosistency level = ALL and one node is down, we woun't be able to execute the operation in this case as the coordinator node requires all replicas to respond (which ensures consistency on all nodes, especially for writting) while there is one node unavailable.
+
+
+4. Which of the WHERE id=? values returned successfully with CONSISTENCY ALL when one of the nodes was down? Why do you think some could be returned but not others?
+
+Answer: results with id=1 and id=5 were down, while results with id = 2, 3 & 4 are normal. This is because some nodes that stores data with id = 1 and id = 5 are down. While consistency level is set to ALL which requires all nodes with the data request to respond, the operation cannot be executed in this case.
+
+
+5. What was the CREATE TABLE statement you used for the nasalogs table? What was the primary key you choose, and why?
+
+Answer: 
+
+CREATE TABLE nasalogs (
+  id UUID,
+  host TEXT,
+  datetime TIMESTAMP,
+  path TEXT,
+  bytes INT,
+  PRIMARY KEY (host, id)
+);
+
+I added a column called id which is UUID, and combined it with host as the primary key.
+
+The id makes the primary key unique, as host may not be unique over rows. However, we can set host as the first component of the primary key to make it a partition key to make use of parallelism.
+
+
+6. What was the CQL query you used (or tried) to get the total number of bytes?
+
+Answer:
+
+SELECT sum(bytes) FROM nasalogs;

@@ -1,0 +1,35 @@
+Name: He Chengkun
+Student ID: 
+
+1. How much of a difference did the .cache() make in your Reddit ETL code?
+
+Answer: Running time spark-submit reddit_etl.py reddit-2 output-1,
+
+With .cache():
+
+real    0m27.121s
+user    0m21.578s
+sys     0m2.176s
+
+Without .cache():
+
+real    0m32.263s
+user    0m22.167s
+sys     0m1.959s
+
+though there is no significant difference, using .cache() is a bit faster than without .cache().
+
+
+2. When would .cache() make code slower than without?
+
+Answer: When the cache data is too large for allocated RAM to handle, it would be stored on disk. The loading speed of regular HDD disk would be significantly slower than RAM. On the other hand, in case that the cost of recomputing is cheaper than the cost of caching it, we should also avoid using .cache().
+
+
+3. Under what conditions will the broadcast join be faster than an actual join?
+
+Answer: If the data to be broadcasted is small enough to fit in the memory of each worker node, or the data has been cached in RAM. In these two cases, broadcast join reduces the amount of data that needs to be transferred across working nodes.
+
+
+4. When will the broadcast join be slower?
+
+Answer: As broadcase would involve a distributing process of data to each working nodes (which involves network & memory), this question can be answered from two prospectives. From the point of network, low network bandwidth would cause a slower join using broadcast. From the point of memory, large data size or small available RAM would also cause a slower speed join.

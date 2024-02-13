@@ -1,0 +1,18 @@
+Name: He Chenkgun
+Student ID: 
+
+1. In the WikipediaPopular class, it would be much more interesting to find the page that is most popular, not just the view count (as we did with Spark). What would be necessary to modify your class to do this? (You don't have to actually implement it.)
+
+Answer: When writting into context in the mapper, we should use a pair (such as LongPairWritable) to store both the view count and the page name. The reducer part should also be adjusted accordingly.
+
+2. An RDD has many methods: it can do many more useful tricks than were at hand with MapReduce. Write a sentence or two to explain the difference between .map and .flatMap. Which is more like the MapReduce concept of mapping?
+
+Answer: The number of output items is equal to the number of input items using .map, while the number of output items can vary using .flatMap. On the other hand, using .flatMap would flatten the structure of the input items.
+
+3. Do the same for .reduce and .reduceByKey. Which is more like the MapReduce concept of reducing?
+
+Answer: No. .reduce applies a function to all the input items to aggregate the values of all. On the other hand, .reduceByKey applies it to all the items with the same key to aggregate the values by key, which is more similar to the MapReduce concept of reducing.
+
+4. When finding popular Wikipedia pages, the maximum number of page views is certainly unique, but the most popular page might be a tie. What would your improved Python implementation do if there were two pages with the same highest number of page views in an hour? What would be necessary to make your code find all of the pages views the maximum number of times? (Again, you don't have to actually implement this.)
+
+Answer: In this case, I can return a tuple of both pages by modifying the comparing function taken by .reduceByKey. This would apply if there is tie case.

@@ -1,0 +1,47 @@
+Name: He Chengkun
+Student ID: 
+
+1. What is your best guess for the slope and intercept of the streaming points being produced?
+
+Answer: After 184 batches, the estimated slope and intercept are around -7.35 and 32.00, respectively (the exact values at Batch 184 are -7.34984912492832 & 31.986334389405528), hence they are my best guess.
+
+
+2. Is your streaming program's estimate of the slope and intercept getting better as the program runs? (That is: is the program aggregating all of the data from the start of time, or only those that have arrived since the last output?)
+
+Answer: Yes, it got better as it stabalized after many batches. That means the program is aggregating all of the data from the start of time (hence the variance drops).
+
+
+
+3. In the colour classification question, what were your validation scores for the RGB and LAB pipelines?
+
+Answer: Validation score for RGB model: 0.630609; Validation score for LAB model: 0.688301
+
+
+
+4. When predicting the tmax values, did you over-fit the training data (and for which training/validation sets)?
+
+Answer: Without the “yesterday's temperature” feature, there exists a large gap between trian & test R^2: training R^2 = 0.78078 & test R^2 = 0.5139609041187403, hence overfit issue is quite severe in this case. On the other hand, with the “yesterday's temperature” feature, the gap is very small between trian & test R^2: training R^2 = 0.83017 & test R^2 = 0.8031074924434702, hence the over-fit issue is not severe.
+
+
+
+5. What were your testing scores for your model with and without the “yesterday's temperature” feature?
+
+Answer: The testing R^2 with “yesterday's temperature” = 0.8031074924434702, and R^2 = 0.5139609041187403 for without the feature.
+
+
+
+6. If you're using a tree-based model, you'll find a .featureImportances property that describes the relative importance of each feature (code commented out in weather_test.py; if not, skip this question). Have a look with and without the “yesterday's temperature” feature: do the results make sense and suggest that your model is making decisions reasonably? With “yesterday's temperature”, is it just predicting “same as yesterday”?
+
+Answer: 
+
+With the feature:
+Predicted tmax tomorrow: 9.155670150927294
+(5,[0,1,2,3,4],[0.10140308167988418,0.04866834837376759,0.026812461312552313,0.12479876875025082,0.6983173398835452])
+
+Without the feature:
+Predicted tmax tomorrow: 9.269853426401133
+(4,[0,1,2,3],[0.36820491008888434,0.1534376615040799,0.08747988232329104,0.39087754608374475])
+
+
+This model makes sense as it give highest feature importance to yesterday_tmax and day_of_year. These two factors are highly related to future temperature in reality by nature.
+With “yesterday's temperature”, is it not just predicting “same as yesterday” (though yesterday_tmax is the most dominant feature), as feature importances of latitude and day_of_year are still relatively significant (0.10140308167988418 and 0.12479876875025082, respcetively). The two predictions are both ~3°C lower than yesterday_tmax.
